@@ -1,0 +1,36 @@
+# =====================================================================
+# SmartBin IoT — .htaccess untuk Clean URL (menghilangkan index.php)
+# Letakkan file ini di root proyek, sejajar dengan index.php
+# Membutuhkan module mod_rewrite Apache aktif (php_mods/xampp default: ON)
+# =====================================================================
+
+<IfModule mod_rewrite.c>
+    AcceptPathInfo On
+    RewriteEngine On
+    # RewriteBase sengaja TIDAK diset ke "/" — itu hanya benar bila project
+    # jadi document root vhost (mis. domain auto Laragon "smartbin-web.test").
+    # Saat diakses lewat IP LAN (http://IP/smartbin-web/...) — wajib dipakai
+    # NodeMCU karena domain ".test" tidak bisa di-resolve dari perangkat lain
+    # di jaringan — project ada di SUBFOLDER, jadi RewriteBase harus dibiarkan
+    # kosong agar Apache otomatis memakai path direktori saat ini sebagai basis.
+
+    # Jika file/folder yang diminta memang ada, biarkan apa adanya
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+
+    # Selain itu, arahkan semua request ke index.php (front controller CI3).
+    # Catatan: sengaja TIDAK memakai "index.php/$1" (PATH_INFO) karena
+    # mod_fcgid + php-cgi di Windows punya bug lama yang menyebabkan error
+    # "No input file specified." saat PATH_INFO dipakai. Aman karena
+    # $config['uri_protocol'] = 'REQUEST_URI' di config.php membaca URI asli
+    # langsung dari REQUEST_URI, bukan dari PATH_INFO.
+    RewriteRule ^(.*)$ index.php [L]
+</IfModule>
+
+# Jika mod_rewrite tidak aktif, akses tetap bisa lewat:
+# http://localhost/smartbin-web/index.php/login
+
+# Cegah akses langsung ke file-file sensitif
+<FilesMatch "\.(sql|md|ino|log)$">
+    Require all denied
+</FilesMatch>
